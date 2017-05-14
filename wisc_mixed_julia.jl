@@ -31,10 +31,14 @@ d[205:612,[:Grade2]] = 4
 d[613:816,[:Grade2]] = 6
 
 
+wisc_long = readtable("/Users/RJacobucci/Documents/archive/WISC/wiscRtran.dat",header=false,separator= ' ')
+names!(wisc_long,[:id,:occ,:verb,:perf,:momed,:grad])
 
 # run mixed effects model
 
-fm1 = fit!(lmm(Verbal ~ Grade2 + (1|id),d))
+#fm1 = fit!(lmm(Verbal ~ Grade2 + (Grade2|id),d))
+fm1 = fit!(lmm(verb ~ occ + (occ|id),wisc_long))
+print(fm1)
 print(coef(fm1))
 print(fixef(fm1))
 print(ranef(fm1))
