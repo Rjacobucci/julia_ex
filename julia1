@@ -1,0 +1,50 @@
+Pkg.installed()
+
+Pkg.add("MultivariateStats")
+Pkg.add("DataFrames")
+Pkg.add("Requests")
+
+using MultivariateStats
+
+using DataFrames
+using Requestions
+
+
+
+
+
+dat = readtable("/Users/RJacobucci/Documents/Github/random_code/wisc4vpe.dat",header=false,separator=' ')
+
+names!(dat,[:V1,:V2,:V4,:V6,:P1,:P2,:P4,:P6,:Moeducat])
+
+
+
+
+
+
+
+
+describe(dat)
+
+
+
+
+
+
+
+
+head(dat)
+
+# train a PCA model
+M = fit(PCA, Xtr; maxoutdim=100)
+
+
+# apply PCA model to testing set
+
+
+Yte = transform(M, Xte)
+
+
+
+# reconstruct testing observations (approximately)
+Xr = reconstruct(M, Yte)
