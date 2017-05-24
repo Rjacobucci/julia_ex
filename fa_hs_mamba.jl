@@ -1,6 +1,6 @@
 #using MultivariateStats
 using Mamba
-Pkg.build("GraphViz")
+#Pkg.build("GraphViz")
 using DataFrames
 dat = readtable("/Users/Ross/Documents/Github/julia_ex/HS6.dat",header=false,separator=' ')
 
@@ -9,10 +9,10 @@ print(head(dat))
 model = Model(
 
 xmat = Stochastic(2,
- (lambda,FS,resid,N,T) ->
+ (lambda,FS,alpha,resid,N,T) ->
    UnivariateDistribution[
      begin
-      Normal(lambda[j]*FS[i],sqrt(resid[j]))
+      Normal(alpha[j] + lambda[j]*FS[i],resid[j])
      end
      for i in 1:N, j in 1:T
    ],
@@ -23,12 +23,16 @@ xmat = Stochastic(2,
     () -> Normal(0, sqrt(1000))
   ),
 
+  alpha = Stochastic(1,
+    () -> Normal(0, 1)
+  ),
+
   FS = Stochastic(1,
     () -> Normal(0,1)
   ),
 
   resid = Stochastic(1,
-    () -> InverseGamma(0.001, 0.001)
+    () -> Gamma(1, 1)
   )
 
 )
@@ -52,18 +56,28 @@ inits = [
     :xmat => line[:xmat],
     :FS => zeros(line[:N]),
     :lambda => rand(Normal(0, 1), 6),
+    :alpha => rand(Normal(0,1),6),
     :resid => rand(Gamma(1, 1),6)
   )
-  for i in 1:1
+  for i in 1:2
 ]
 
 #using GraphViz
 
 #display(Graph(graph2dot(model)))
 
-scheme = [AMWG(:lambda, 0.1),
-          Slice(:resid, 1.0),
+scheme = [AMWG(:alpha, 0.1),
+          Slice(:lambda, 1.0),
+          Slice(:resid,1.0),
           Slice(:FS, 0.5)]
 setsamplers!(model, scheme)
-sim1 = mcmc(model, line, inits, 10000, burnin=250, thin=2, chains=1)
+sim1 = mcmc(model, line, inits, 5000, burnin=1500, thin=1, chains=2)
 describe(sim1)
+plot(sim1)
+print(gelmandiag(sim1, mpsrf=true, transform=true))
+
+
+sim = sim1[1000:10000, ["lambda[1]", "lambda[2]"], :]
+p = plot(sim)
+display(p)
+draw(p, filename="summaryplot.svg")
